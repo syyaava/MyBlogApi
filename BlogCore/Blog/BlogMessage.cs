@@ -1,6 +1,6 @@
 ﻿namespace BlogCore.Blog
 {
-    public record BlogMessage(Guid Id, string UserId, string Message, DateTime CreationTime)
+    public record BlogMessage(string Id, string UserId, string Message, DateTime CreationTime)
     {
         public const string EMPTY_MESSAGE_FILLER = "**No message**";
         /// <summary>
@@ -13,6 +13,11 @@
         /// </summary>
         /// <param name="userId"></param>
         /// <param name="message"></param>
-        public BlogMessage(string userId, string message) : this(Guid.NewGuid(), userId, message, DateTime.Now) { }
+        public BlogMessage(string userId, string message) : this(Guid.NewGuid().ToString(), userId, message, DateTime.Now) { }
+
+        public static BlogMessage GetEmptyBlogMessage()
+        {
+            return new BlogMessage(Guid.Empty.ToString(), User.UNKNOW_USER_ID, EMPTY_MESSAGE_FILLER, DateTime.MinValue);
+        }
     }
 }
