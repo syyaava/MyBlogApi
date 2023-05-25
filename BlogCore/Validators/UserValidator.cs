@@ -1,5 +1,6 @@
 ﻿using BlogCore.Blog;
 using BlogCore.Exceptions;
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -13,17 +14,23 @@ namespace BlogCore.Validators
         {
             if (value is User user)
             {
-                if(string.IsNullOrEmpty(user.Name)) throw new ArgumentNullException(nameof(user.Name));
-                if(string.IsNullOrEmpty(user.Id)) throw new ArgumentNullException(nameof(user.Name));
-                if(string.IsNullOrEmpty(user.Email)) throw new ArgumentNullException(nameof(user.Name));
+                //if (string.IsNullOrEmpty(user.Id)) throw new ValidationException();
+                //if (string.IsNullOrEmpty(user.Name)) throw new ValidationException();
+                //if (string.IsNullOrEmpty(user.Email)) throw new ValidationException();
 
-                if (!Regex.IsMatch(user.Id, RegexPatterns.UserId)) throw new NotValidValueException("The Id is not correct.");
-                if (!Regex.IsMatch(user.Name, RegexPatterns.UserName)) throw new NotValidValueException("The Name is not correct. The name field must contains only letters and/or numbers (4-64 symbols).");
-                if (!Regex.IsMatch(user.Email, RegexPatterns.Email)) throw new NotValidValueException("The Email is not correct.");
+                if (!CheckRegexMatches(user.Id, RegexPatterns.USER_ID)) 
+                    throw new ValidationException($"{nameof(user.Id)} not valid.");
+                if (!CheckRegexMatches(user.Email, RegexPatterns.EMAIL)) 
+                    throw new ValidationException($"{nameof(user.Email)} not valid.");
+                if (!CheckRegexMatches(user.Name, RegexPatterns.USERNAME)) 
+                    throw new ValidationException($"{nameof(user.Name)} not valid. The name field must contains only letters and/or numbers (4-64 symbols).");
+
                 return true;
             }
             else
                 throw new ArgumentException($"The value is not an object of type \"{TypeForValidating}\".");
         }
+
+        private bool CheckRegexMatches(string input, string pattern) => Regex.IsMatch(input, pattern);
     }
 }

@@ -1,32 +1,33 @@
 ﻿using BlogCore.Db;
 using BlogCore.Exceptions;
 using BlogCore.Validators;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogCore.Blog
 {
     public class Blog //TODO: Реализовать валидацию данных
-    {
+    { //TODO: Вынести валидаторы в отдельный класс
         public readonly Guid Id;
 
         private readonly User user;
         //TODO: Добавить кэш сообщений.
-        private IBlogDbProvider dbProvider;
-        private IEnumerable<IValidator> validators;
+        private readonly IBlogDbProvider dbProvider;
+        private readonly IMainDataValidatior validator;
 
-        public Blog(User user, IBlogDbProvider dbProvider, IEnumerable<IValidator> validators)
+        public Blog(User user, IBlogDbProvider dbProvider, IMainDataValidatior validator)
         {
             this.user = user;
             this.dbProvider = dbProvider;
             Id = Guid.NewGuid();
-            this.validators = validators;
+            this.validator = validator;
         }
 
         public ActionResult<BlogMessage> GetMessage(string id)
         {
             try
             {
-                //if (!ValidateValue(id))
-                //    throw new NotValidValueException();
+                if (!validator.ValidateObject(id))
+                    throw new ValidationException();
 
                 var message = dbProvider.GetMessage(id);
                 return new ActionResult<BlogMessage>(message, StatusCode.Success);
@@ -34,10 +35,22 @@ namespace BlogCore.Blog
             catch (NotFoundInDbException<string> ex)
             {
                 return new ActionResult<BlogMessage>(null, StatusCode.NotFound);
-            }//TODO: обработчики для исключений в валидаторе
+            }
+            //catch (ArgumentNullException ex)
+            //{
+            //    return new ActionResult<BlogMessage>(null, StatusCode.Error, ex);
+            //}
+            //catch (ArgumentException ex)
+            //{
+            //    return new ActionResult<BlogMessage>(null, StatusCode.Error, ex);
+            //}
+            catch (ValidatorNotFoundException)
+            {
+                return new ActionResult<BlogMessage>(null, StatusCode.Error, new Exception("Internal server error."));
+            }
             catch (Exception ex)
             {
-                throw new NotImplementedException();
+                return new ActionResult<BlogMessage>(null, StatusCode.Error, ex);
             }
         }
 
@@ -62,6 +75,7 @@ namespace BlogCore.Blog
         {
             try
             {
+                if(count <= 0) count = 10;
                 var messages = dbProvider.GetLastUserMessages(user.Id, count);
                 return new ActionResult<IEnumerable<BlogMessage>>(messages, StatusCode.Success);
             }
@@ -128,22 +142,6 @@ namespace BlogCore.Blog
             {
                 throw new NotImplementedException();
             }
-        }
-
-        private bool ValidateValue<T>(T obj)
-        {
-            if (obj == null)
-                throw new ArgumentNullException($"Validating object cannot be null. Object type: {typeof(T)}");
-
-            IValidator validator = FindValidator(obj);
-
-            return validator.IsValid(obj);
-        }
-
-        private IValidator FindValidator<T>(T obj)
-        {
-            var validator = validators.FirstOrDefault(v => v.TypeForValidating == obj.GetType());
-            return validator == null ? throw new ValidatorNotFoundException(obj.GetType()) : validator;
         }
     }
 }

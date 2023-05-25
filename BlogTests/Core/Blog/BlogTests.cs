@@ -4,6 +4,7 @@ using BlogCore.Exceptions;
 using BlogCore.Validators;
 using BlogTests.Mocks;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogTests.Core
 {
@@ -20,9 +21,11 @@ namespace BlogTests.Core
             var dbProvider = new MockBlogDbProvider();
             List<IValidator> validators = new List<IValidator>()
             {
-                new UserValidator()
+                new UserValidator(),
+                new BlogMessageValidator(),
             };
-            blog = new Blog(user, dbProvider, validators); //TODO: Нужно реализовать валидаторы.
+            var mainValidator = new MainDataValidator(validators.ToArray());
+            blog = new Blog(user, dbProvider, mainValidator); //TODO: Нужно реализовать валидаторы.
         }
 
         [Fact]
@@ -61,7 +64,7 @@ namespace BlogTests.Core
 
         [Theory]
         [InlineData(null, typeof(ArgumentNullException))]
-        [InlineData("ASLKNJdlkjanHJsnjka-090-9dfs0-a885797/*974/748as4dfalknsd", typeof(NotValidValueException))]
+        [InlineData("ASLKNJdlkjanHJsnjka-090-9dfs0-a885797/*974/748as4dfalknsd", typeof(ValidationException))]
         public void GetMessage_NotValidId_ReturnErrorActionResultWithNullAndException(string? id, Type exception)
         {
             var user = new User("TestUser1", "TestUser@gmail.com");
@@ -380,8 +383,8 @@ namespace BlogTests.Core
 
         [Theory]
         [InlineData(null, typeof(ArgumentNullException))]
-        [InlineData("", typeof(NotValidValueException))]
-        [InlineData("      ", typeof(NotValidValueException))]
+        [InlineData("", typeof(ValidationException))]
+        [InlineData("      ", typeof(ValidationException))]
         public void RemoveMessage_NotValidId_ReturnErrorActionResultWithNullAndException(string? id, Type exception)
         {
             var user = new User("TestUser1", "TestUser@gmail.com");
@@ -435,8 +438,8 @@ namespace BlogTests.Core
 
         [Theory]
         [InlineData(null, typeof(ArgumentNullException))]
-        [InlineData("", typeof(NotValidValueException))]
-        [InlineData("      ", typeof(NotValidValueException))]
+        [InlineData("", typeof(ValidationException))]
+        [InlineData("      ", typeof(ValidationException))]
         public void UpdateMessage_NotValidIdMessageAndValidNewBlogMessage_ReturnErrorActionResultWithNullAndException(string? id, Type exception)
         {
             var user = new User("TestUser1", "TestUser@gmail.com");
@@ -485,7 +488,7 @@ namespace BlogTests.Core
             Assert.Null(result.Result);
             Assert.Equal(StatusCode.Error, result.Status);
             Assert.NotNull(result.Exception);
-            Assert.Equal(typeof(NotValidValueException), result.Exception.GetType());
+            Assert.Equal(typeof(ValidationException), result.Exception.GetType());
         }
     }
 }

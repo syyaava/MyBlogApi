@@ -1,13 +1,13 @@
 ﻿using BlogCore.Validators;
-using System.Text.RegularExpressions;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogCore.Blog
 {
     public record User
     {
         public const string UNKNOW_USER_ID = "UNKNOW_USER_ID";
-        public readonly string Id; 
-        public readonly string Name; 
+        public readonly string Id;
+        public readonly string Name;
         public readonly string Email;
 
         public User(string name, string email) : this("user-" + Guid.NewGuid(), name, email) { }

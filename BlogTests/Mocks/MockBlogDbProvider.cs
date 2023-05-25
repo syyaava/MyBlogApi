@@ -37,8 +37,8 @@ namespace BlogTests.Mocks
             ValidateId(userId);
             var allMessages = messages.Where(message => message.UserId == userId);
             if(allMessages.Count() == 0)
-                throw new NotFoundException<string>();
-            return allMessages;
+                throw new NotFoundInDbException<string>();
+            return allMessages.Reverse();
         }
 
         public IEnumerable<BlogMessage> GetLastUserMessages(string userId, int count)
@@ -46,8 +46,8 @@ namespace BlogTests.Mocks
             ValidateId(userId);
             var lastMessages = messages.Where(message => message.UserId == userId);
             if (lastMessages.Count() == 0)
-                throw new NotFoundException<string>();
-            return lastMessages;
+                throw new NotFoundInDbException<string>();
+            return lastMessages.TakeLast(count).Reverse();
         }
 
         public BlogMessage GetMessage(string id)
@@ -76,9 +76,10 @@ namespace BlogTests.Mocks
             if(message == null)
                 throw new NotFoundInDbException<string>();
 
+            var updatedMessage = new BlogMessage(message.Id, message.UserId, newMessage.Message, message.CreationTime, DateTime.Now);
             var index = messages.IndexOf(message);
-            messages[index] = newMessage;
-            return newMessage;
+            messages[index] = updatedMessage;
+            return updatedMessage;
         }
 
         private void ValidateId(string id)

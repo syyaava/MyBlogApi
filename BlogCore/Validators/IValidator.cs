@@ -1,4 +1,6 @@
-﻿namespace BlogCore.Validators
+﻿using System.Text.RegularExpressions;
+
+namespace BlogCore.Validators
 {
     public interface IValidator
     {
