@@ -26,7 +26,8 @@ namespace BlogCore.Blog
         {
             try
             {
-                if (!validator.ValidateObject(id))
+                var blogMessageForIdValidation = new BlogMessage(id, user.Id, "Message", DateTime.Now, DateTime.Now);
+                if (!validator.ValidateObject(blogMessageForIdValidation))
                     throw new ValidationException();
 
                 var message = dbProvider.GetMessage(id);
