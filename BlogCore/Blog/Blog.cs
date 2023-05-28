@@ -15,36 +15,28 @@ namespace BlogCore.Blog
         private readonly IMainDataValidatior validator;
 
         public Blog(User user, IBlogDbProvider dbProvider, IMainDataValidatior validator)
-        {
+        {            
             this.user = user;
             this.dbProvider = dbProvider;
             Id = Guid.NewGuid();
             this.validator = validator;
+
+            validator.ValidateObject(this.user);
         }
 
         public ActionResult<BlogMessage> GetMessage(string id)
         {
             try
             {
-                var blogMessageForIdValidation = new BlogMessage(id, user.Id, "Message", DateTime.Now, DateTime.Now);
-                if (!validator.ValidateObject(blogMessageForIdValidation))
-                    throw new ValidationException();
+                ValidateId(id);
 
                 var message = dbProvider.GetMessage(id);
                 return new ActionResult<BlogMessage>(message, StatusCode.Success);
             }
-            catch (NotFoundInDbException<string> ex)
+            catch (NotFoundInDbException<string>)
             {
                 return new ActionResult<BlogMessage>(null, StatusCode.NotFound);
             }
-            //catch (ArgumentNullException ex)
-            //{
-            //    return new ActionResult<BlogMessage>(null, StatusCode.Error, ex);
-            //}
-            //catch (ArgumentException ex)
-            //{
-            //    return new ActionResult<BlogMessage>(null, StatusCode.Error, ex);
-            //}
             catch (ValidatorNotFoundException)
             {
                 return new ActionResult<BlogMessage>(null, StatusCode.Error, new Exception("Internal server error."));
@@ -55,6 +47,13 @@ namespace BlogCore.Blog
             }
         }
 
+        private void ValidateId(string id)
+        {
+            var blogMessageForIdValidation = new BlogMessage(id, user.Id, "Message", DateTime.Now, DateTime.Now);
+            if (!validator.ValidateObject(blogMessageForIdValidation))
+                throw new ValidationException();
+        }
+
         public ActionResult<IEnumerable<BlogMessage>> GetAllUserMessages()
         {
             try
@@ -62,13 +61,13 @@ namespace BlogCore.Blog
                 var messages = dbProvider.GetAllUserMessages(user.Id);
                 return new ActionResult<IEnumerable<BlogMessage>>(messages, StatusCode.Success);
             }
-            catch (NotFoundInDbException<IEnumerable<BlogMessage>> ex)
+            catch (NotFoundInDbException<string>)
             {
-                return new ActionResult<IEnumerable<BlogMessage>>(Enumerable.Empty<BlogMessage>(), StatusCode.NotFound);
+                return new ActionResult<IEnumerable<BlogMessage>>(null, StatusCode.NotFound);
             }
             catch (Exception ex)
             {
-                throw new NotImplementedException();
+                return new ActionResult<IEnumerable<BlogMessage>>(null, StatusCode.Error, ex);
             }
         }
 
@@ -76,21 +75,21 @@ namespace BlogCore.Blog
         {
             try
             {
-                if(count <= 0) count = 10;
+                if(count <= 0) throw new ArgumentOutOfRangeException($"Count out of range. Count value: {count}");
                 var messages = dbProvider.GetLastUserMessages(user.Id, count);
                 return new ActionResult<IEnumerable<BlogMessage>>(messages, StatusCode.Success);
             }
-            catch(NotFoundInDbException<IEnumerable<BlogMessage>> ex)
+            catch(NotFoundInDbException<string>)
             {
-                return new ActionResult<IEnumerable<BlogMessage>>(Enumerable.Empty<BlogMessage>(), StatusCode.NotFound);
+                return new ActionResult<IEnumerable<BlogMessage>>(null, StatusCode.NotFound);
             }
             catch(ArgumentOutOfRangeException ex)
             {
-                throw new NotImplementedException();
+                return new ActionResult<IEnumerable<BlogMessage>>(null, StatusCode.Error, ex);
             }
             catch(Exception ex)
             {
-                throw new NotImplementedException();
+                return new ActionResult<IEnumerable<BlogMessage>>(null, StatusCode.Error, ex);
             }
         }
 
@@ -98,6 +97,16 @@ namespace BlogCore.Blog
         {
             try
             {
+                if (messages == null)
+                    throw new ArgumentNullException(nameof(messages), "Message collection is null.");
+                if (messages.Length == 0)
+                    throw new ArgumentException("Message collection doesn't contains objects.");
+
+                foreach(var message in messages)
+                {
+                    validator.ValidateObject(message);
+                }
+
                 var addedMessages = dbProvider.AddMessages(messages);
                 return new ActionResult<IEnumerable<BlogMessage>>(addedMessages, StatusCode.Success);
             }
@@ -107,7 +116,7 @@ namespace BlogCore.Blog
             }
             catch(Exception ex)
             {
-                throw new NotImplementedException();
+                return new ActionResult<IEnumerable<BlogMessage>>(null, StatusCode.Error, ex);
             }
         }
 
@@ -115,16 +124,17 @@ namespace BlogCore.Blog
         {
             try
             {
+                ValidateId(id);
                 var removedMessage = dbProvider.RemoveMessage(id);
                 return new ActionResult<BlogMessage>(removedMessage, StatusCode.Success);
             }
-            catch(NotFoundInDbException<string> ex)
+            catch(NotFoundInDbException<string>)
             {
                 return new ActionResult<BlogMessage>(null, StatusCode.NotFound);
             }
             catch(Exception ex)
             {
-                throw new NotImplementedException();
+                return new ActionResult<BlogMessage>(null, StatusCode.Error, ex);
             }
         }
 
@@ -132,16 +142,19 @@ namespace BlogCore.Blog
         {
             try
             {
+                ValidateId(id);
+                validator.ValidateObject(newMessage);
+
                 var updatedMessage = dbProvider.UpdateMessage(id, newMessage);
                 return new ActionResult<BlogMessage>(updatedMessage, StatusCode.Success);
             }
-            catch(NotFoundInDbException<string> ex)
+            catch(NotFoundInDbException<string>)
             {
                 return new ActionResult<BlogMessage>(null, StatusCode.NotFound);
             }
             catch(Exception ex)
             {
-                throw new NotImplementedException();
+                return new ActionResult<BlogMessage>(null, StatusCode.Error, ex);
             }
         }
     }

@@ -16,7 +16,7 @@ namespace BlogCore.Blog
         {
             Id = id;
             Name = name;
-            Email = email;
+            Email = email.ToLower();
         }
     }
 }

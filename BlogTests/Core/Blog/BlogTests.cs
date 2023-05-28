@@ -346,7 +346,7 @@ namespace BlogTests.Core
             Assert.NotNull(result);
             Assert.Null(result.Result);
             Assert.NotNull(result.Exception);
-            Assert.Equal(typeof(ArgumentException), result.Exception.GetType());
+            Assert.Equal(typeof(ValidationException), result.Exception.GetType());
         }
 
         [Fact]
