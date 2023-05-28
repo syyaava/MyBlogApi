@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 namespace BlogCore.Blog
 {
     public class Blog //TODO: Реализовать валидацию данных
-    { //TODO: Вынести валидаторы в отдельный класс
+    { 
         public readonly Guid Id;
 
         private readonly User user;

@@ -2,6 +2,7 @@
 using BlogCore.Db;
 using BlogCore.Exceptions;
 using Infrastructure;
+using Infrastructure.BlogDbContext;
 using Infrastructure.DbProvider;
 
 namespace BlogTests.Infrastructure
@@ -24,7 +25,8 @@ namespace BlogTests.Infrastructure
 
         private void InitializeDbProvider()
         {
-            dbProvider = new SQLiteBlogDbProvider();
+            IDbContext<BlogMessage> dbContext = null;
+            dbProvider = new SQLiteBlogMessageDbProvider();
         }
 
         [Fact]

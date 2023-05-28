@@ -1,10 +1,18 @@
 ﻿using BlogCore.Blog;
 using BlogCore.Db;
+using Infrastructure.BlogDbContext;
 
 namespace Infrastructure.DbProvider
 {
-    public class SQLiteBlogDbProvider : IBlogDbProvider
+    public class SQLiteBlogMessageDbProvider : IBlogDbProvider
     {
+        private IDbContext<BlogMessage> dbContext;
+
+        public SQLiteBlogMessageDbProvider(IDbContext<BlogMessage> dbContext)
+        {
+            this.dbContext = dbContext;
+        }
+
         public IEnumerable<BlogMessage> AddMessages(params BlogMessage[] message)
         {
             throw new NotImplementedException();
